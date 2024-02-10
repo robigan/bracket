@@ -41,6 +41,8 @@ export default function TournamentsTable({
         <Table.Td>
           <Link href={`/tournaments/${tournament.id}`}>{tournament.name}</Link>
         </Table.Td>
+        <Table.Td>{tournament.id}</Table.Td>
+        <Table.Td>{tournament.club_id}</Table.Td>
         <Table.Td>
           <DateTime datetime={tournament.created} />
         </Table.Td>
@@ -73,6 +75,12 @@ export default function TournamentsTable({
         <Table.Tr>
           <ThSortable state={tableState} field="name">
             {t('title')}
+          </ThSortable>
+          <ThSortable state={tableState} field="id">
+            {t('id')}
+          </ThSortable>
+          <ThSortable state={tableState} field="club_id">
+            {t('club_select_label')}
           </ThSortable>
           <ThSortable state={tableState} field="created">
             {t('created')}
