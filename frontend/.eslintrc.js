@@ -10,6 +10,10 @@ module.exports = {
       files: ['**/?(*.)+(spec|test).[jt]s?(x)'],
       extends: ['plugin:testing-library/react'],
     },
+    {
+      excludedFiles: [".eslintrc.js"],
+      files: [""],
+    }
   ],
   parserOptions: {
     project: './tsconfig.json',

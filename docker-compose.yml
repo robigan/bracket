@@ -2,7 +2,9 @@ version: '3.1'
 
 services:
     bracket-frontend:
-        image: ghcr.io/evroon/bracket-frontend
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
         container_name: bracket-frontend
         ports:
             - "3000:3000"
@@ -12,7 +14,9 @@ services:
         restart: unless-stopped
 
     bracket-backend:
-        image: ghcr.io/evroon/bracket-backend
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
         container_name: bracket-backend
         ports:
             - "8400:8400"
