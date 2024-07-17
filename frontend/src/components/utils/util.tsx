@@ -53,6 +53,12 @@ export function getTournamentIdFromRouter() {
   return { id, tournamentData };
 }
 
+export function getStageItemIdFromRouter() {
+  const router = useRouter();
+  const { stage_item_id: idString }: any = router.query;
+  return parseInt(idString, 10);
+}
+
 export function getTournamentEndpointFromRouter() {
   const router = useRouter();
   const { id }: any = router.query;
@@ -67,11 +73,17 @@ export function getBaseURL() {
   return typeof window !== 'undefined' && window.location.origin ? window.location.origin : '';
 }
 
-export const groupBy = (keys: any) => (array: any) =>
-  array.reduce((objectsByKeyValue: any, obj: any) => {
-    const value = keys.map((key: any) => obj[key]).join('-');
+export const groupBy = <
+  K extends PropertyKey = PropertyKey,
+  T extends Record<K, any> = Record<K, unknown>,
+>(
+  keys: K[],
+  array: T[]
+) =>
+  array.reduce((objectsByKeyValue: Record<string, T[]>, obj) => {
+    const value = keys.map((key) => obj[key]).join('');
     // eslint-disable-next-line no-param-reassign
-    objectsByKeyValue[value] = (objectsByKeyValue[value] || []).concat(obj);
+    objectsByKeyValue[value] = (objectsByKeyValue[value] ?? []).concat(obj);
     return objectsByKeyValue;
   }, {});
 

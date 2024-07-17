@@ -5,6 +5,7 @@ import { groupBy, responseIsValid } from '../components/utils/util';
 import { Court } from '../interfaces/court';
 import { MatchInterface } from '../interfaces/match';
 import { StageWithStageItems } from '../interfaces/stage';
+import { StageItemWithRounds } from '../interfaces/stage_item';
 import { TeamInterface } from '../interfaces/team';
 import { getTeams } from './adapter';
 
@@ -15,11 +16,13 @@ export function getTeamsLookup(tournamentId: number) {
   if (!isResponseValid) {
     return null;
   }
-  return Object.fromEntries(swrTeamsResponse.data.data.teams.map((x: TeamInterface) => [x.id, x]));
+  return Object.fromEntries(
+    (swrTeamsResponse.data.data.teams as TeamInterface[]).map((x: TeamInterface) => [x.id, x])
+  );
 }
 
 export function getStageItemLookup(swrStagesResponse: SWRResponse) {
-  let result: any[] = [];
+  let result: [number, StageItemWithRounds][] = [];
 
   swrStagesResponse.data.data.map((stage: StageWithStageItems) =>
     stage.stage_items.forEach((stage_item) => {
@@ -30,7 +33,7 @@ export function getStageItemLookup(swrStagesResponse: SWRResponse) {
 }
 
 export function getStageItemList(swrStagesResponse: SWRResponse) {
-  let result: any[] = [];
+  let result: [StageItemWithRounds][] = [];
 
   swrStagesResponse.data.data.map((stage: StageWithStageItems) =>
     stage.stage_items.forEach((stage_item) => {
@@ -41,7 +44,7 @@ export function getStageItemList(swrStagesResponse: SWRResponse) {
 }
 
 export function getStageItemTeamIdsLookup(swrStagesResponse: SWRResponse) {
-  let result: any[] = [];
+  let result: [number, (number | null)[]][] = [];
 
   swrStagesResponse.data.data.map((stage: StageWithStageItems) =>
     stage.stage_items.forEach((stageItem) => {
@@ -52,8 +55,34 @@ export function getStageItemTeamIdsLookup(swrStagesResponse: SWRResponse) {
   return Object.fromEntries(result);
 }
 
-export function getMatchLookup(swrStagesResponse: SWRResponse) {
+export function getStageItemTeamsLookup(
+  swrStagesResponse: SWRResponse,
+  swrTeamsResponse: SWRResponse
+) {
   let result: any[] = [];
+  const teamsLookup = Object.fromEntries(
+    swrTeamsResponse.data.data.teams.map((x: TeamInterface) => [x.id, x])
+  );
+
+  swrStagesResponse.data.data.map((stage: StageWithStageItems) =>
+    stage.stage_items
+      .sort((si1: any, si2: any) => (si1.name > si2.name ? 1 : -1))
+      .forEach((stageItem) => {
+        const teams = stageItem.inputs
+          .map((input) => input.team_id)
+          .map((id) => teamsLookup![id!])
+          .filter((team: TeamInterface) => team != null);
+
+        if (teams.length > 0) {
+          result = result.concat([[stageItem.id, teams]]);
+        }
+      })
+  );
+  return Object.fromEntries(result);
+}
+
+export function getMatchLookup(swrStagesResponse: SWRResponse) {
+  let result: [number, { match: MatchInterface; stageItem: StageItemWithRounds }][] = [];
 
   swrStagesResponse.data.data.map((stage: StageWithStageItems) =>
     stage.stage_items.forEach((stageItem) => {
@@ -61,19 +90,6 @@ export function getMatchLookup(swrStagesResponse: SWRResponse) {
         round.matches.forEach((match) => {
           result = result.concat([[match.id, { match, stageItem }]]);
         });
-      });
-    })
-  );
-  return Object.fromEntries(result);
-}
-
-export function getRoundsLookup(swrStagesResponse: SWRResponse) {
-  let result: any[] = [];
-
-  swrStagesResponse.data.data.map((stage: StageWithStageItems) =>
-    stage.stage_items.forEach((stageItem) => {
-      stageItem.rounds.forEach((round) => {
-        result = result.concat([[round.id, round]]);
       });
     })
   );
@@ -104,12 +120,12 @@ export function stringToColour(input: string) {
 
 export function getMatchLookupByCourt(swrStagesResponse: SWRResponse) {
   const matches = Object.values(getMatchLookup(swrStagesResponse)).map((x) => x.match);
-  return groupBy(['court_id'])(matches);
+  return groupBy<PropertyKey, MatchInterface>(['court_id'], matches);
 }
 
 export function getScheduleData(
   swrCourtsResponse: SWRResponse,
-  matchesByCourtId: any
+  matchesByCourtId: ReturnType<typeof groupBy<PropertyKey, MatchInterface>>
 ): { court: Court; matches: MatchInterface[] }[] {
   return swrCourtsResponse.data.data.map((court: Court) => ({
     matches: (matchesByCourtId[court.id] || [])

@@ -1,6 +1,6 @@
 import { showNotification } from '@mantine/notifications';
-import { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import type Axios from 'axios';
+import { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 import { useRouter } from 'next/router';
 import useSWR, { SWRResponse } from 'swr';
 
@@ -161,14 +161,9 @@ export function getStages(tournament_id: number, no_draft_rounds: boolean = fals
   );
 }
 
-export function getStagesLive(
-  tournament_id: number,
-  no_draft_rounds: boolean = false
-): SWRResponse {
+export function getStagesLive(tournament_id: number): SWRResponse {
   return useSWR(
-    tournament_id === -1
-      ? null
-      : `tournaments/${tournament_id}/stages?no_draft_rounds=${no_draft_rounds}`,
+    tournament_id === -1 ? null : `tournaments/${tournament_id}/stages?no_draft_rounds=true`,
     fetcherWithTimestamp,
     {
       refreshInterval: 5_000,
@@ -192,11 +187,11 @@ export function getUser(): SWRResponse {
 
 export function getUpcomingMatches(
   tournament_id: number,
-  round_id: number,
+  round_id: number | null,
   schedulerSettings: SchedulerSettings
 ): SWRResponse {
   return useSWR(
-    round_id === -1
+    round_id == null
       ? null
       : `tournaments/${tournament_id}/rounds/${round_id}/upcoming_matches?elo_diff_threshold=${schedulerSettings.eloThreshold}&only_recommended=${schedulerSettings.onlyRecommended}&limit=${schedulerSettings.limit}&iterations=${schedulerSettings.iterations}`,
     fetcher
