@@ -72,11 +72,11 @@ A demo is available for free at <https://www.bracketapp.nl/demo>. The demo lasts
 your data will de deleted. 
 
 # Quickstart
-To quickly run bracket to see how it works, clone it and run `docker-compose up`:
+To quickly run bracket to see how it works, clone it and run `docker compose up`:
 ```bash
 git clone git@github.com:evroon/bracket.git
 cd bracket
-sudo docker-compose up -d
+sudo docker compose up -d
 ```
 
 This will start the backend and frontend of Bracket, as well as a postgres instance. You should now
@@ -93,7 +93,7 @@ sudo docker exec bracket-backend pipenv run ./cli.py create-dev-db
 See also the [quickstart docs](https://docs.bracketapp.nl/docs/running-bracket/quickstart).
 
 # Development setup
-Read the [development docs](https://docs.bracketapp.nl/docs/running-bracket/development) for how to run Bracket for development.
+Read the [development docs](https://docs.bracketapp.nl/docs/community/development) for how to run Bracket for development.
 
 Prerequisites are `yarn`, `postgresql` and `pipenv` to run the frontend, database and backend.
 
@@ -164,10 +164,10 @@ See the [contribution docs](https://docs.bracketapp.nl/docs/community/contributi
         </a>
     </td>
     <td align="center">
-        <a href="https://github.com/Sevichecc">
-            <img src="https://avatars.githubusercontent.com/u/91365763?v=4" width="100;" alt="Sevichecc"/>
+        <a href="https://github.com/BachErik">
+            <img src="https://avatars.githubusercontent.com/u/75324423?v=4" width="100;" alt="BachErik"/>
             <br />
-            <sub><b>SevicheCC</b></sub>
+            <sub><b>BachErik</b></sub>
         </a>
     </td>
     <td align="center">
@@ -175,6 +175,13 @@ See the [contribution docs](https://docs.bracketapp.nl/docs/community/contributi
             <img src="https://avatars.githubusercontent.com/u/13609136?v=4" width="100;" alt="djpiper28"/>
             <br />
             <sub><b>Danny Piper</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Sevichecc">
+            <img src="https://avatars.githubusercontent.com/u/91365763?v=4" width="100;" alt="Sevichecc"/>
+            <br />
+            <sub><b>SevicheCC</b></sub>
         </a>
     </td>
     <td align="center">

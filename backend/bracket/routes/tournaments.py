@@ -10,6 +10,7 @@ from bracket.database import database
 from bracket.logic.planning.matches import update_start_times_of_matches
 from bracket.logic.subscriptions import check_requirement
 from bracket.logic.tournaments import get_tournament_logo_path
+from bracket.models.db.ranking import RankingCreateBody
 from bracket.models.db.tournament import (
     TournamentBody,
     TournamentUpdateBody,
@@ -23,6 +24,7 @@ from bracket.routes.auth import (
 )
 from bracket.routes.models import SuccessResponse, TournamentResponse, TournamentsResponse
 from bracket.schema import tournaments
+from bracket.sql.rankings import sql_create_ranking
 from bracket.sql.tournaments import (
     sql_create_tournament,
     sql_delete_tournament,
@@ -40,7 +42,6 @@ from bracket.utils.errors import (
 )
 from bracket.utils.id_types import TournamentId
 from bracket.utils.logging import logger
-from bracket.utils.types import assert_some
 
 router = APIRouter()
 unauthorized_exception = HTTPException(
@@ -82,7 +83,7 @@ async def get_tournaments(
             return TournamentsResponse(data=[tournament])
 
         case _, _ if isinstance(user, UserPublic):
-            user_club_ids = await get_which_clubs_has_user_access_to(assert_some(user.id))
+            user_club_ids = await get_which_clubs_has_user_access_to(user.id)
             return TournamentsResponse(
                 data=await sql_get_tournaments(tuple(user_club_ids), endpoint_name)
             )
@@ -129,9 +130,7 @@ async def create_tournament(
     existing_tournaments = await sql_get_tournaments((tournament_to_insert.club_id,))
     check_requirement(existing_tournaments, user, "max_tournaments")
 
-    has_access_to_club = await get_user_access_to_club(
-        tournament_to_insert.club_id, assert_some(user.id)
-    )
+    has_access_to_club = await get_user_access_to_club(tournament_to_insert.club_id, user.id)
     if not has_access_to_club:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -139,10 +138,14 @@ async def create_tournament(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    try:
-        await sql_create_tournament(tournament_to_insert)
-    except asyncpg.exceptions.UniqueViolationError as exc:
-        check_unique_constraint_violation(exc, {UniqueIndex.ix_tournaments_dashboard_endpoint})
+    async with database.transaction():
+        try:
+            tournament_id = await sql_create_tournament(tournament_to_insert)
+        except asyncpg.exceptions.UniqueViolationError as exc:
+            check_unique_constraint_violation(exc, {UniqueIndex.ix_tournaments_dashboard_endpoint})
+
+        ranking = RankingCreateBody()
+        await sql_create_ranking(tournament_id, ranking, position=0)
 
     return SuccessResponse()
 

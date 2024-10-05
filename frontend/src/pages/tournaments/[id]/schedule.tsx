@@ -7,16 +7,19 @@ import {
   Card,
   Grid,
   Group,
+  Menu,
   Stack,
   Text,
   Title,
 } from '@mantine/core';
-import { IconAlertCircle, IconCalendarPlus } from '@tabler/icons-react';
+import { IconAlertCircle, IconCalendarPlus, IconDots, IconTrash } from '@tabler/icons-react';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import React, { useCallback, useState } from 'react';
+import { SWRResponse } from 'swr';
 import { BiEditAlt } from 'react-icons/bi';
 
+import CourtModal from '../../../components/modals/create_court_modal';
 import MatchModal, { OpenMatchModalFn } from '../../../components/modals/match_modal';
 import { NoContent } from '../../../components/no_content/empty_table_info';
 import { DateTime } from '../../../components/utils/datetime';
@@ -24,7 +27,9 @@ import { Translator } from '../../../components/utils/types';
 import { getTournamentIdFromRouter, responseIsValid } from '../../../components/utils/util';
 import { Court } from '../../../interfaces/court';
 import { MatchInterface, formatMatchTeam1, formatMatchTeam2 } from '../../../interfaces/match';
+import { TournamentMinimal } from '../../../interfaces/tournament';
 import { getCourts, getStages } from '../../../services/adapter';
+import { deleteCourt } from '../../../services/court';
 import {
   getMatchLookup,
   getMatchLookupByCourt,
@@ -97,16 +102,20 @@ function ScheduleRow({
 }
 
 function ScheduleColumn({
+  tournamentId,
   court,
   matches,
   openMatchModal,
   stageItemsLookup,
+  swrCourtsResponse,
   matchesLookup,
 }: {
+  tournamentId: number;
   court: Court;
   matches: MatchInterface[];
   openMatchModal: OpenMatchModalFn;
   stageItemsLookup: any;
+  swrCourtsResponse: SWRResponse;
   matchesLookup: any;
 }) {
   const { t } = useTranslation();
@@ -138,8 +147,32 @@ function ScheduleColumn({
     <Droppable droppableId={`${court.id}`} direction="vertical">
       {(provided) => (
         <div {...provided.droppableProps} ref={provided.innerRef}>
-          <div style={{ width: '25rem', marginLeft: '0.5rem', marginRight: '0.5rem' }}>
-            <h4>{court.name}</h4>
+          <div style={{ width: '25rem' }}>
+            <Group justify="space-between">
+              <Group>
+                <h4 style={{ marginTop: '0', margin: 'auto' }}>{court.name}</h4>
+              </Group>
+              <Menu withinPortal position="bottom-end" shadow="sm">
+                <Menu.Target>
+                  <ActionIcon variant="transparent" color="gray">
+                    <IconDots size="1.25rem" />
+                  </ActionIcon>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconTrash size="1.5rem" />}
+                    onClick={async () => {
+                      await deleteCourt(tournamentId, court.id);
+                      await swrCourtsResponse.mutate();
+                    }}
+                    color="red"
+                  >
+                    {t('delete_court_button')}
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
             {rows}
             {noItemsAlert}
             {provided.placeholder}
@@ -152,12 +185,16 @@ function ScheduleColumn({
 
 function Schedule({
   t,
+  tournament,
+  swrCourtsResponse,
   stageItemsLookup,
   matchesLookup,
   schedule,
   openMatchModal,
 }: {
   t: Translator;
+  tournament: TournamentMinimal;
+  swrCourtsResponse: SWRResponse;
   stageItemsLookup: any;
   matchesLookup: any;
   schedule: { court: Court; matches: MatchInterface[] }[];
@@ -165,6 +202,8 @@ function Schedule({
 }) {
   const columns = schedule.map((item) => (
     <ScheduleColumn
+      tournamentId={tournament.id}
+      swrCourtsResponse={swrCourtsResponse}
       stageItemsLookup={stageItemsLookup}
       matchesLookup={matchesLookup}
       key={item.court.id}
@@ -174,8 +213,26 @@ function Schedule({
     />
   ));
 
-  if (columns.length < 1) {
-    return <NoContent title={t('no_matches_title')} description={t('no_matches_description')} />;
+  columns.push(
+    <div style={{ width: '25rem' }}>
+      <CourtModal
+        swrCourtsResponse={swrCourtsResponse}
+        tournamentId={tournament.id}
+        buttonSize="xs"
+      />
+    </div>
+  );
+  if (columns.length < 2) {
+    return (
+      <Stack align="center">
+        <NoContent title={t('no_courts_title')} description={t('no_courts_description')} />
+        <CourtModal
+          swrCourtsResponse={swrCourtsResponse}
+          tournamentId={tournament.id}
+          buttonSize="lg"
+        />
+      </Stack>
+    );
   }
 
   return (
@@ -242,21 +299,23 @@ export default function SchedulePage() {
           <Title>{t('planning_title')}</Title>
         </Grid.Col>
         <Grid.Col span={6}>
-          <Group justify="right">
-            <Button
-              color="indigo"
-              size="md"
-              variant="filled"
-              style={{ marginBottom: 10 }}
-              leftSection={<IconCalendarPlus size={24} />}
-              onClick={async () => {
-                await scheduleMatches(tournamentData.id);
-                await swrStagesResponse.mutate();
-              }}
-            >
-              {t('schedule_description')}
-            </Button>
-          </Group>
+          {data.length < 1 ? null : (
+            <Group justify="right">
+              <Button
+                color="indigo"
+                size="md"
+                variant="filled"
+                style={{ marginBottom: 10 }}
+                leftSection={<IconCalendarPlus size={24} />}
+                onClick={async () => {
+                  await scheduleMatches(tournamentData.id);
+                  await swrStagesResponse.mutate();
+                }}
+              >
+                {t('schedule_description')}
+              </Button>
+            </Group>
+          )}
         </Grid.Col>
       </Grid>
       <Group grow mt="1rem">
@@ -274,6 +333,8 @@ export default function SchedulePage() {
         >
           <Schedule
             t={t}
+            tournament={tournamentData}
+            swrCourtsResponse={swrCourtsResponse}
             schedule={data}
             stageItemsLookup={stageItemsLookup}
             matchesLookup={matchesLookup}

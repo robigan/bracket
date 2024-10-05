@@ -2,12 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from bracket.database import database
-from bracket.logic.ranking.elo import recalculate_ranking_for_tournament_id
+from bracket.logic.ranking.elo import (
+    recalculate_ranking_for_stage_item_id,
+)
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.round import (
     Round,
     RoundCreateBody,
-    RoundToInsert,
+    RoundInsertable,
     RoundUpdateBody,
 )
 from bracket.models.db.user import UserPublic
@@ -24,6 +26,7 @@ from bracket.sql.stage_items import get_stage_item
 from bracket.sql.stages import get_full_tournament_details
 from bracket.sql.validation import check_foreign_keys_belong_to_tournament
 from bracket.utils.id_types import RoundId, TournamentId
+from tests.integration_tests.mocks import MOCK_NOW
 
 router = APIRouter()
 
@@ -46,7 +49,7 @@ async def delete_round(
             rounds.c.id == round_id and rounds.c.tournament_id == tournament_id
         ),
     )
-    await recalculate_ranking_for_tournament_id(tournament_id)
+    await recalculate_ranking_for_stage_item_id(tournament_id, round_with_matches.stage_item_id)
     return SuccessResponse()
 
 
@@ -82,7 +85,9 @@ async def create_round(
         )
 
     round_id = await sql_create_round(
-        RoundToInsert(
+        RoundInsertable(
+            created=MOCK_NOW,
+            is_draft=False,
             stage_item_id=round_body.stage_item_id,
             name=await get_next_round_name(tournament_id, round_body.stage_item_id),
         ),

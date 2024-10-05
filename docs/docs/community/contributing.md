@@ -52,10 +52,10 @@ translation for you, and then carefully check and correct any mistakes.
         </a>
     </td>
     <td align="center">
-        <a href="https://github.com/Sevichecc">
-            <img src="https://avatars.githubusercontent.com/u/91365763?v=4" width="100;" alt="Sevichecc"/>
+        <a href="https://github.com/BachErik">
+            <img src="https://avatars.githubusercontent.com/u/75324423?v=4" width="100;" alt="BachErik"/>
             <br />
-            <sub><b>SevicheCC</b></sub>
+            <sub><b>BachErik</b></sub>
         </a>
     </td>
     <td align="center">
@@ -63,6 +63,13 @@ translation for you, and then carefully check and correct any mistakes.
             <img src="https://avatars.githubusercontent.com/u/13609136?v=4" width="100;" alt="djpiper28"/>
             <br />
             <sub><b>Danny Piper</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Sevichecc">
+            <img src="https://avatars.githubusercontent.com/u/91365763?v=4" width="100;" alt="Sevichecc"/>
+            <br />
+            <sub><b>SevicheCC</b></sub>
         </a>
     </td>
     <td align="center">

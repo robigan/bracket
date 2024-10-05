@@ -19,7 +19,6 @@ from bracket.utils.dummy_records import (
     DUMMY_TEAM2,
 )
 from bracket.utils.http import HTTPMethod
-from bracket.utils.types import assert_some
 from tests.integration_tests.api.shared import SUCCESS_RESPONSE, send_tournament_request
 from tests.integration_tests.models import AuthContext
 from tests.integration_tests.sql import (
@@ -42,7 +41,9 @@ async def test_create_match(
             DUMMY_STAGE1.model_copy(update={"tournament_id": auth_context.tournament.id})
         ) as stage_inserted,
         inserted_stage_item(
-            DUMMY_STAGE_ITEM1.model_copy(update={"stage_id": stage_inserted.id})
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": stage_inserted.id, "ranking_id": auth_context.ranking.id}
+            )
         ) as stage_item_inserted,
         inserted_round(
             DUMMY_ROUND1.model_copy(update={"stage_item_id": stage_item_inserted.id})
@@ -79,7 +80,9 @@ async def test_delete_match(
             DUMMY_STAGE1.model_copy(update={"tournament_id": auth_context.tournament.id})
         ) as stage_inserted,
         inserted_stage_item(
-            DUMMY_STAGE_ITEM1.model_copy(update={"stage_id": stage_inserted.id})
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": stage_inserted.id, "ranking_id": auth_context.ranking.id}
+            )
         ) as stage_item_inserted,
         inserted_round(
             DUMMY_ROUND1.model_copy(update={"stage_item_id": stage_item_inserted.id})
@@ -121,7 +124,9 @@ async def test_update_match(
             DUMMY_STAGE1.model_copy(update={"tournament_id": auth_context.tournament.id})
         ) as stage_inserted,
         inserted_stage_item(
-            DUMMY_STAGE_ITEM1.model_copy(update={"stage_id": stage_inserted.id})
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": stage_inserted.id, "ranking_id": auth_context.ranking.id}
+            )
         ) as stage_item_inserted,
         inserted_round(
             DUMMY_ROUND1.model_copy(update={"stage_item_id": stage_item_inserted.id})
@@ -182,7 +187,9 @@ async def test_update_endpoint_custom_duration_margin(
             DUMMY_STAGE1.model_copy(update={"tournament_id": auth_context.tournament.id})
         ) as stage_inserted,
         inserted_stage_item(
-            DUMMY_STAGE_ITEM1.model_copy(update={"stage_id": stage_inserted.id})
+            DUMMY_STAGE_ITEM1.model_copy(
+                update={"stage_id": stage_inserted.id, "ranking_id": auth_context.ranking.id}
+            )
         ) as stage_item_inserted,
         inserted_round(
             DUMMY_ROUND1.model_copy(update={"stage_item_id": stage_item_inserted.id})
@@ -249,7 +256,11 @@ async def test_upcoming_matches_endpoint(
         ) as stage_inserted,
         inserted_stage_item(
             DUMMY_STAGE_ITEM1.model_copy(
-                update={"stage_id": stage_inserted.id, "type": StageType.SWISS}
+                update={
+                    "stage_id": stage_inserted.id,
+                    "type": StageType.SWISS,
+                    "ranking_id": auth_context.ranking.id,
+                }
             )
         ) as stage_item_inserted,
         inserted_round(
@@ -259,7 +270,7 @@ async def test_upcoming_matches_endpoint(
                     "stage_item_id": stage_item_inserted.id,
                 }
             )
-        ) as round_inserted,
+        ),
         inserted_team(
             DUMMY_TEAM1.model_copy(
                 update={"tournament_id": auth_context.tournament.id, "elo_score": Decimal("1150.0")}
@@ -274,29 +285,32 @@ async def test_upcoming_matches_endpoint(
             DUMMY_PLAYER1.model_copy(
                 update={"elo_score": Decimal("1100.0"), "tournament_id": auth_context.tournament.id}
             ),
-            assert_some(team1_inserted.id),
+            team1_inserted.id,
         ) as player_inserted_1,
         inserted_player_in_team(
             DUMMY_PLAYER2.model_copy(
                 update={"elo_score": Decimal("1300.0"), "tournament_id": auth_context.tournament.id}
             ),
-            assert_some(team2_inserted.id),
+            team2_inserted.id,
         ) as player_inserted_2,
         inserted_player_in_team(
             DUMMY_PLAYER3.model_copy(
                 update={"elo_score": Decimal("1200.0"), "tournament_id": auth_context.tournament.id}
             ),
-            assert_some(team1_inserted.id),
+            team1_inserted.id,
         ) as player_inserted_3,
         inserted_player_in_team(
             DUMMY_PLAYER4.model_copy(
                 update={"elo_score": Decimal("1400.0"), "tournament_id": auth_context.tournament.id}
             ),
-            assert_some(team2_inserted.id),
+            team2_inserted.id,
         ) as player_inserted_4,
     ):
         json_response = await send_tournament_request(
-            HTTPMethod.GET, f"rounds/{round_inserted.id}/upcoming_matches", auth_context, {}
+            HTTPMethod.GET,
+            f"stage_items/{stage_item_inserted.id}/upcoming_matches",
+            auth_context,
+            {},
         )
         assert json_response == {
             "data": [

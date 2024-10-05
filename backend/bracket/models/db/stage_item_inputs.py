@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from pydantic import BaseModel, Field
 
 from bracket.models.db.shared import BaseModelORM
@@ -5,7 +7,7 @@ from bracket.utils.id_types import MatchId, StageItemId, StageItemInputId, TeamI
 
 
 class StageItemInputBase(BaseModelORM):
-    id: StageItemInputId | None = None
+    id: StageItemInputId
     slot: int
     tournament_id: TournamentId
     stage_item_id: StageItemId | None = None
@@ -16,6 +18,10 @@ class StageItemInputGeneric(BaseModel):
     winner_from_stage_item_id: StageItemId | None = None
     winner_position: int | None = None
     winner_from_match_id: MatchId | None = None
+    points: Decimal = Decimal("0.0")
+    wins: int = 0
+    draws: int = 0
+    losses: int = 0
 
     def __hash__(self) -> int:
         return (

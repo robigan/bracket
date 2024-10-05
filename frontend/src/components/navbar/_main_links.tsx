@@ -8,8 +8,8 @@ import {
   IconCalendar,
   IconDots,
   IconHome,
+  IconScoreboard,
   IconSettings,
-  IconSoccerField,
   IconTrophy,
   IconUser,
   IconUsers,
@@ -130,11 +130,6 @@ export function TournamentLinks({ tournament_id }: any) {
       link: `${tm_prefix}/teams`,
     },
     {
-      icon: IconSoccerField,
-      label: capitalize(t('courts_title')),
-      link: `${tm_prefix}/courts`,
-    },
-    {
       icon: IconCalendar,
       label: capitalize(t('planning_title')),
       link: `${tm_prefix}/schedule`,
@@ -143,6 +138,11 @@ export function TournamentLinks({ tournament_id }: any) {
       icon: IconBrackets,
       label: capitalize(t('results_title')),
       link: `${tm_prefix}/results`,
+    },
+    {
+      icon: IconScoreboard,
+      label: capitalize(t('rankings_title')),
+      link: `${tm_prefix}/rankings`,
     },
     {
       icon: IconSettings,

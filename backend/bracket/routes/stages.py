@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from bracket.database import database
-from bracket.logic.ranking.elo import recalculate_ranking_for_tournament_id
 from bracket.logic.scheduling.builder import determine_available_inputs
-from bracket.logic.scheduling.handle_stage_activation import update_matches_in_activated_stage
+from bracket.logic.scheduling.handle_stage_activation import (
+    get_team_rankings_lookup_for_stage,
+    update_matches_in_activated_stage,
+)
 from bracket.logic.subscriptions import check_requirement
 from bracket.models.db.stage import Stage, StageActivateBody, StageUpdateBody
 from bracket.models.db.user import UserPublic
@@ -15,6 +17,7 @@ from bracket.routes.auth import (
 )
 from bracket.routes.models import (
     StageItemInputOptionsResponse,
+    StageRankingResponse,
     StagesWithStageItemsResponse,
     SuccessResponse,
 )
@@ -69,7 +72,6 @@ async def delete_stage(
 
     await sql_delete_stage(tournament_id, stage_id)
 
-    await recalculate_ranking_for_tournament_id(tournament_id)
     return SuccessResponse()
 
 
@@ -140,3 +142,17 @@ async def get_available_inputs(
     teams = await get_teams_with_members(tournament_id)
     available_inputs = determine_available_inputs(stage_id, teams, stages)
     return StageItemInputOptionsResponse(data=available_inputs)
+
+
+@router.get("/tournaments/{tournament_id}/stages/{stage_id}/rankings")
+async def get_rankings(
+    tournament_id: TournamentId,
+    stage_id: StageId,
+    _: UserPublic = Depends(user_authenticated_for_tournament),
+    stage_without_details: Stage = Depends(stage_dependency),
+) -> StageRankingResponse:
+    """
+    Get the rankings for the stage items in this stage.
+    """
+    [stage] = await get_full_tournament_details(tournament_id, stage_id=stage_id)
+    return StageRankingResponse(data=await get_team_rankings_lookup_for_stage(tournament_id, stage))

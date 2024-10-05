@@ -4,9 +4,9 @@ import {
   IconBrackets,
   IconCalendarEvent,
   IconHome,
+  IconScoreboard,
   IconSearch,
   IconSettings,
-  IconSoccerField,
   IconTrophy,
   IconUser,
   IconUsers,
@@ -84,18 +84,18 @@ export function BracketSpotlight() {
       leftSection: <IconTrophy size="1.2rem" />,
     },
     {
-      id: 'courts',
-      title: t('courts_title'),
-      description: t('court_spotlight_description'),
-      onClick: () => router.push(`/tournaments/${tournamentId}/courts`),
-      leftSection: <IconSoccerField size="1.2rem" />,
-    },
-    {
       id: 'tournament settings',
       title: t('tournament_setting_title'),
       description: t('tournament_setting_spotlight_description'),
       onClick: () => router.push(`/tournaments/${tournamentId}/settings`),
       leftSection: <IconSettings size="1.2rem" />,
+    },
+    {
+      id: 'rankings',
+      title: t('rankings_title'),
+      description: t('rankings_spotlight_description'),
+      onClick: () => router.push(`/tournaments/${tournamentId}/rankings`),
+      leftSection: <IconScoreboard size="1.2rem" />,
     },
   ];
   const allActions = tournamentId >= 0 ? actions.concat(tournamentActions) : actions;
